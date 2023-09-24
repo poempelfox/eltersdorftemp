@@ -21,7 +21,8 @@ void rg15_init(void)
     // Configure UART parameters - we're using UART1.
     ESP_ERROR_CHECK(uart_driver_install(UART_NUM_1, 200, 200, 5, &rainsens_comm_handle, 0));
     ESP_ERROR_CHECK(uart_param_config(UART_NUM_1, &rainsens_serial_config));
-    ESP_ERROR_CHECK(uart_set_pin(UART_NUM_1, 4, 36, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
+    // TX on GPIO25, RX on GPIO26
+    ESP_ERROR_CHECK(uart_set_pin(UART_NUM_1, 25, 26, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
     /* Tell the rainsensor we want polling mode, a.k.a. "shut up until you're spoken to".
      * Also, use high res mode and metrical output, disable 
      * tipping-bucket-output, and reset counters. */

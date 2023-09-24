@@ -31,4 +31,8 @@ This is WIP.
 * I2C bus 1
   - SCL on GPIO33, SDA on GPIO32
   - SEN50
+* RG15
+  - TX (purple cable) on GPIO25, connects to SI pin on RG15
+  - RX (gray cable) on GPIO26, connects to SO pin on RG15
+  - power the RG15 through 5V on V+, do NOT power with 3.3V through its 3V3 pin.
 

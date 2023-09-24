@@ -20,3 +20,15 @@ This is WIP.
   - light / UV sensor - too many things giving shadows at random times around
 * power will be coming from the mains grid, we have no reason to preserve power, except of course keeping our heat dissapation low to not spoil our own measurements
 
+## cabling
+
+* there is a power distribution board that also distributes I2C bus 0
+* I2C bus 0
+  - as always, SCL is green and SDA is yellow
+  - SCL on GPIO18, SDA on GPIO19
+  - SHT41
+  - LPS35HW
+* I2C bus 1
+  - SCL on GPIO33, SDA on GPIO32
+  - SEN50
+

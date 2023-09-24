@@ -109,7 +109,6 @@ void app_main(void)
     }
 
     /* Now loop, polling sensors and sending data once per minute. */
-    time_t lastread = time(NULL);
     while (1) {
       if (lastmeasts > time(NULL)) { /* This should not be possible, but we've
          * seen time(NULL) temporarily report insane timestamps far in the
@@ -119,8 +118,8 @@ void app_main(void)
         lastmeasts = time(NULL); // We should return to normal measurements in 60s
       }
       time_t curts = time(NULL);
-      if (((curts - lastread) >= 60) || (lastread > curts)) {
-        lastread = curts;
+      if (((curts - lastmeasts) >= 60) || (lastmeasts > curts)) {
+        lastmeasts = curts;
         ESP_LOGI("main.c", "Telling sensors to sense...");
         /* Request update from the sensors that don't autoupdate all the time */
         lps35hw_startmeas();
@@ -187,6 +186,8 @@ void app_main(void)
             too_wet_ctr -= 30;
             forcesht4xheater = 0;
           }
+          evs[naevs].temp = temphum.temp;
+          evs[naevs].hum = temphum.hum;
           // prepare to submit!
         } else {
           evs[naevs].temp = NAN;

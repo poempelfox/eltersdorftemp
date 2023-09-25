@@ -25,11 +25,11 @@ This is WIP.
 * there is a power distribution board that also distributes I2C bus 0
 * I2C bus 0
   - as always, SCL is green and SDA is yellow
-  - SCL on GPIO18, SDA on GPIO19
+  - SCL (green cable) on GPIO18, SDA (yellow cable) on GPIO19
   - SHT41
   - LPS35HW
 * I2C bus 1
-  - SCL on GPIO33, SDA on GPIO32
+  - SCL (green cable) on GPIO33, SDA (yellow cable) on GPIO32
   - SEN50
 * RG15
   - TX (purple cable) on GPIO25, connects to SI pin on RG15

@@ -15,9 +15,9 @@ void i2c_port_init(void)
     };
     i2c_param_config(I2C_NUM_0, &i2cp0conf);
     if (i2c_driver_install(I2C_NUM_0, i2cp0conf.mode, 0, 0, 0) != ESP_OK) {
-        ESP_LOGI("zamdach-i2c.c", "Oh dear: I2C-Init for Port 0 failed.");
+        ESP_LOGI("edt-i2c.c", "Oh dear: I2C-Init for Port 0 failed.");
     } else {
-        ESP_LOGI("zamdach-i2c.c", "I2C master port 0 initialized");
+        ESP_LOGI("edt-i2c.c", "I2C master port 0 initialized");
     }
     i2c_config_t i2cp1conf = {
         .mode = I2C_MODE_MASTER,
@@ -29,9 +29,9 @@ void i2c_port_init(void)
     };
     i2c_param_config(I2C_NUM_1, &i2cp1conf);
     if (i2c_driver_install(I2C_NUM_1, i2cp1conf.mode, 0, 0, 0) != ESP_OK) {
-        ESP_LOGI("zamdach-i2c.c", "Oh dear: I2C-Init for Port 1 failed.");
+        ESP_LOGI("edt-i2c.c", "Oh dear: I2C-Init for Port 1 failed.");
     } else {
-        ESP_LOGI("zamdach-i2c.c", "I2C master port 1 initialized");
+        ESP_LOGI("edt-i2c.c", "I2C master port 1 initialized");
     }
 }
 

@@ -1,5 +1,4 @@
-/* ZAMDACH2022 rg15.c
- * routines for the RG15 rain sensor */
+/* rg15.c - routines for the RG15 rain sensor */
 
 #include <string.h>
 #include "driver/uart.h"

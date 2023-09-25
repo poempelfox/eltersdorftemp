@@ -20,11 +20,12 @@
 #include "rg15.h"
 #include "sen50.h"
 #include "sht4x.h"
+#include "submit.h"
 #include "webserver.h"
 
 #define sleep_ms(x) vTaskDelay(pdMS_TO_TICKS(x))
 
-static const char *TAG = "zamdach2022";
+static const char *TAG = "eltersdorftemp";
 
 /* Global / Exported variables, used to provide the webserver.
  * struct ev is defined in webserver.h for practical reasons. */
@@ -52,6 +53,7 @@ void app_main(void)
     memset(evs, 0, sizeof(evs));
     time_t lastmeasts = 0;
     time_t lastsht4xheat = 0;
+    time_t lastsuccsubmit = 0;
 
     /* This is in all OTA-Update examples, so I consider it mandatory. */
     esp_err_t err = nvs_flash_init();
@@ -118,7 +120,7 @@ void app_main(void)
         lastmeasts = time(NULL); // We should return to normal measurements in 60s
       }
       time_t curts = time(NULL);
-      if (((curts - lastmeasts) >= 60) || (lastmeasts > curts)) {
+      if ((curts - lastmeasts) >= 60) {
         lastmeasts = curts;
         ESP_LOGI("main.c", "Telling sensors to sense...");
         /* Request update from the sensors that don't autoupdate all the time */
@@ -143,18 +145,23 @@ void app_main(void)
          * see whether a heating might have influenced the measurements. */
         evs[naevs].lastsht4xheat = lastsht4xheat;
 
+        struct wpds tosubmit[10]; /* we'll submit at most 8 values because we have that many sensors */
+        int nts = 0; /* Number of values to submit */
+        /* Lets define a little helper macro to limit the copy+paste orgies */
+        #define QUEUETOSUBMIT(s, v)  tosubmit[nts].sensorid = s; tosubmit[nts].value = v; nts++;
+
         if (press > 0) {
           ESP_LOGI(TAG, "Measured pressure: %.3f hPa", press);
           /* submit that measurement */
           evs[naevs].press = press;
-          //submit_to_wpd(CONFIG_ZAMDACH_WPDSID_PRESSURE, press);
+          QUEUETOSUBMIT(WPDSID_PRESSURE, press);
         } else {
           evs[naevs].press = NAN;
         }
 
         if (raing > -0.1) {
           ESP_LOGI(TAG, "Rain: %.3f mm", raing);
-          //submit_to_wpd(CONFIG_ZAMDACH_WPDSID_RAINGAUGE1, raing);
+          QUEUETOSUBMIT(WPDSID_RAINGAUGE, raing);
           evs[naevs].raing = raing;
         } else {
           evs[naevs].raing = NAN;
@@ -188,7 +195,8 @@ void app_main(void)
           }
           evs[naevs].temp = temphum.temp;
           evs[naevs].hum = temphum.hum;
-          // prepare to submit!
+          QUEUETOSUBMIT(WPDSID_TEMPERATURE, temphum.temp);
+          QUEUETOSUBMIT(WPDSID_HUMIDITY, temphum.hum);
         } else {
           evs[naevs].temp = NAN;
           evs[naevs].hum = NAN;
@@ -203,18 +211,43 @@ void app_main(void)
           evs[naevs].pm025 = pmdata.pm025;
           evs[naevs].pm040 = pmdata.pm040;
           evs[naevs].pm100 = pmdata.pm100;
-          // prepare to submit!
+          QUEUETOSUBMIT(WPDSID_PM010, pmdata.pm010);
+          QUEUETOSUBMIT(WPDSID_PM025, pmdata.pm025);
+          QUEUETOSUBMIT(WPDSID_PM040, pmdata.pm040);
+          QUEUETOSUBMIT(WPDSID_PM100, pmdata.pm100);
         } else {
           evs[naevs].pm010 = NAN;
           evs[naevs].pm025 = NAN;
           evs[naevs].pm040 = NAN;
           evs[naevs].pm100 = NAN;
         }
+        /* Clean up helper macro */
+        #undef QUEUETOSUBMIT
 
         /* Now mark the updated values as the current ones for the webserver */
         activeevs = naevs;
 
-        /* FIXME submit values! */
+        /* submit values (if any). Record if we succeeded doing so. */
+        ESP_LOGI(TAG, "have %d values to submit...", nts);
+        if (nts > 0) {
+          if (submit_to_wpd_multi(nts, tosubmit) == 0) {
+            ESP_LOGI(TAG, "successfully submitted values.");
+            lastsuccsubmit = time(NULL);
+          } else {
+            ESP_LOGW(TAG, "failed to submit values!");
+          }
+        }
+        if ((curts > 900)
+         && ((curts - lastsuccsubmit) > 900)
+         && ((curts - lastsuccsubmit) < 100000)) {
+          /* We have been up for at least 15 minutes and not
+           * successfully submitted any values in more than
+           * 15 minutes (but the timespan isn't ultralong either
+           * which happens when NTP jumps our time).
+           * It might be a good idea to reboot. */
+          ESP_LOGE(TAG, "No successful submit in %lld seconds - about to reboot.", (time(NULL) - lastsuccsubmit));
+          esp_restart();
+        }
       } else { /* Woke up too early, go back to sleep */
         sleep_ms(1000);
       }

@@ -69,6 +69,7 @@ void network_prepare(void)
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     network_event_group = xEventGroupCreate();
     mainnetif = esp_netif_create_default_wifi_sta();
+    esp_netif_set_hostname(mainnetif, "eltersdorftemp");
     wifi_init_config_t wicfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&wicfg));
     // Register user defined event handers

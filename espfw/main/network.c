@@ -47,15 +47,28 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
 static void got_ip_event_handler(void *arg, esp_event_base_t event_base,
                                  int32_t event_id, void *event_data)
 {
-    ip_event_got_ip_t *event = (ip_event_got_ip_t *) event_data;
-    const esp_netif_ip_info_t *ip_info = &event->ip_info;
-
-    ESP_LOGI("network.c", "We got an IP address!");
-    ESP_LOGI("network.c", "~~~~~~~~~~~");
-    ESP_LOGI("network.c", "IP:     " IPSTR, IP2STR(&ip_info->ip));
-    ESP_LOGI("network.c", "NETMASK:" IPSTR, IP2STR(&ip_info->netmask));
-    ESP_LOGI("network.c", "GW:     " IPSTR, IP2STR(&ip_info->gw));
-    ESP_LOGI("network.c", "~~~~~~~~~~~");
+    ip_event_got_ip_t * event4;
+    const esp_netif_ip_info_t *ip_info;
+    ip_event_got_ip6_t * event6;
+    const esp_netif_ip6_info_t * ip6_info;
+    switch (event_id) {
+    case IP_EVENT_STA_GOT_IP:
+      ESP_LOGI("network.c", "We got an IPv4 address!");
+      event4 = (ip_event_got_ip_t *)event_data;
+      ip_info = &event4->ip_info;
+      ESP_LOGI("network.c", "IP:     " IPSTR, IP2STR(&ip_info->ip));
+      ESP_LOGI("network.c", "NETMASK:" IPSTR, IP2STR(&ip_info->netmask));
+      ESP_LOGI("network.c", "GW:     " IPSTR, IP2STR(&ip_info->gw));
+      break;
+    case IP_EVENT_GOT_IP6:
+      ESP_LOGI("network.c", "We got an IPv6 address!");
+      event6 = (ip_event_got_ip6_t *)event_data;
+      ip6_info = &event6->ip6_info;
+      ESP_LOGI("network.c", "IPv6:" IPV6STR, IPV62STR(ip6_info->ip));
+      break;
+    case IP_EVENT_STA_LOST_IP:
+      ESP_LOGI("network.c", "IP-address lost.");
+    };
     xEventGroupSetBits(network_event_group, NETWORK_CONNECTED_BIT);
 }
 
@@ -75,6 +88,8 @@ void network_prepare(void)
     // Register user defined event handers
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &got_ip_event_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_LOST_IP, &got_ip_event_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_GOT_IP6, &got_ip_event_handler, NULL));
 
     wifi_config_t wccfg = {
       .sta = {
